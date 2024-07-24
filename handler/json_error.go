@@ -7,6 +7,7 @@ import (
 )
 
 func jsonError(w http.ResponseWriter, text string, err error) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	text_error := fmt.Sprintf("%s [%s]", text, err)
 	fmt.Println(text_error)
 
@@ -19,8 +20,7 @@ func jsonError(w http.ResponseWriter, text string, err error) {
 
 	_, err = w.Write(json_text)
 	if err != nil {
-		fmt.Println("Ошибка записи данных в БД:", err)
+		fmt.Println("Ошибка записи JSON:", err)
 		return
 	}
-	return
 }

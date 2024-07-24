@@ -7,27 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/GalievRinat/go-postgres-kafka/messages_repository"
 	"github.com/GalievRinat/go-postgres-kafka/model"
-	"github.com/segmentio/kafka-go"
 )
-
-type Handler struct {
-	messagesRepo *messages_repository.MessagesRepository
-	messageKafka *kafka.Conn
-}
-
-func NewHandler(host string, port int, user string, password string, dbName string) (*Handler, error) {
-	handler := Handler{}
-	handler.messagesRepo = &messages_repository.MessagesRepository{}
-	err := handler.messagesRepo.CreateRepo(host, port, user, password, dbName)
-	return &handler, err
-}
-
-func (handler *Handler) CloseHandler() {
-	err := handler.messagesRepo.DB.Close()
-	fmt.Println("Ошибка закрытия handler: ", err)
-}
 
 func (handler *Handler) ApiNewMessage(w http.ResponseWriter, r *http.Request) {
 	var message model.Message
@@ -46,15 +27,20 @@ func (handler *Handler) ApiNewMessage(w http.ResponseWriter, r *http.Request) {
 
 	message.Timestamp = time.Now()
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 	r_count, err := handler.messagesRepo.Add(message)
 	if err != nil || r_count == 0 {
-		fmt.Println(err)
+		fmt.Println("Ошибка добавления задачи в БД")
 		jsonError(w, "Ошибка добавления задачи в БД", err)
 		return
 	}
 
-	jsonError(w, "Задача добавлена", nil)
+	err = handler.KafkaNewMessage(message)
+	if err != nil {
+		fmt.Println("Ошибка записи сообщения в Kafka:")
+		jsonError(w, "Ошибка записи сообщения в Kafka:", err)
+		return
+	}
+	fmt.Println("Задача добавлена")
 	w.WriteHeader(http.StatusOK)
+	jsonError(w, "Задача добавлена", nil)
 }
