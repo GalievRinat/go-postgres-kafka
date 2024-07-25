@@ -8,15 +8,17 @@ import (
 
 	"github.com/GalievRinat/go-postgres-kafka/handler"
 	"github.com/go-chi/chi/v5"
-	gotdotenv "github.com/joho/godotenv"
+
+	//gotdotenv "github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	err := gotdotenv.Load()
-	if err != nil {
-		fmt.Println(err)
-	}
+	//err := gotdotenv.Load()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 
 	port, err := strconv.Atoi(os.Getenv("GPK_DBPORT"))
 	if err != nil {

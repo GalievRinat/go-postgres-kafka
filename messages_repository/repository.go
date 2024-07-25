@@ -21,6 +21,7 @@ func (messagesRepo *MessagesRepository) CreateRepo(host string, port int, user s
 		fmt.Println("Ошибка открытия БД: ", err)
 		return err
 	}
+	fmt.Printf("БД [%s] на хосте [%s:%d] успешно подключена\n", dbName, host, port)
 	return nil
 }
 
