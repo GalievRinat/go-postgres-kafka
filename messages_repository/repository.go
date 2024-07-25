@@ -2,6 +2,7 @@ package messages_repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/GalievRinat/go-postgres-kafka/model"
@@ -24,15 +25,31 @@ func (messagesRepo *MessagesRepository) CreateRepo(host string, port int, user s
 }
 
 func (messagesRepo *MessagesRepository) Add(message model.Message) (int64, error) {
-	res, err := messagesRepo.DB.Exec("INSERT INTO all_messages (timestamp, topic, title, comment, sendtokafka) VALUES ($1, $2, $3, $4, $5)",
-		message.Timestamp, message.Topic, message.Title, message.Comment, message.SendToKafka)
+	var lastInsertId int64
+	err := messagesRepo.DB.QueryRow("INSERT INTO all_messages (timestamp, topic, title, comment, sendtokafka) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		message.Timestamp, message.Topic, message.Title, message.Comment, message.SendToKafka).Scan(&lastInsertId)
 	if err != nil {
 		fmt.Println("Ошибка добавления задачи (insert): ", err)
-		return 0, err
+		return -1, err
+	}
+	return lastInsertId, nil
+}
+
+func (messagesRepo *MessagesRepository) MarkSend(message model.Message) error {
+	res, err := messagesRepo.DB.Exec("UPDATE all_messages SET sendtokafka = True WHERE id = $1", message.ID)
+	if err != nil {
+		fmt.Println("Ошибка пометки сообщения отправленным: ", err)
+		return err
 	}
 	r_count, err := res.RowsAffected()
 	if err != nil {
-		return 0, err
+		fmt.Println("Ошибка пометки сообщения отправленным: ", err)
+		return err
 	}
-	return r_count, nil
+	if r_count == 0 {
+		fmt.Printf("Сообщение c ID [%s] не найдено: \n", message.ID)
+		return errors.New("message with id not found")
+	}
+
+	return nil
 }

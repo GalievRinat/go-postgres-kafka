@@ -27,17 +27,22 @@ func (handler *Handler) ApiNewMessage(w http.ResponseWriter, r *http.Request) {
 
 	message.Timestamp = time.Now()
 
-	r_count, err := handler.messagesRepo.Add(message)
-	if err != nil || r_count == 0 {
-		fmt.Println("Ошибка добавления задачи в БД")
+	id, err := handler.messagesRepo.Add(message)
+	if err != nil || id < 0 {
 		jsonError(w, "Ошибка добавления задачи в БД", err)
 		return
 	}
 
+	message.ID = id
+
 	err = handler.KafkaNewMessage(message)
 	if err != nil {
-		fmt.Println("Ошибка записи сообщения в Kafka:")
 		jsonError(w, "Ошибка записи сообщения в Kafka:", err)
+		return
+	}
+
+	err = handler.messagesRepo.MarkSend(message)
+	if err != nil {
 		return
 	}
 	fmt.Println("Задача добавлена")
