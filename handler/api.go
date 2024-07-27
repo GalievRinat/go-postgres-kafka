@@ -85,27 +85,48 @@ func (handler *Handler) ApiStats(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (handler *Handler) ApiAllMessages(w http.ResponseWriter, r *http.Request) {
-	totalCount, err := handler.messagesRepo.TotalCount()
-	if err != nil || totalCount < 0 {
-		jsonError(w, "Ошибка подсчета количества сообщений", err)
+func (handler *Handler) ApiGetMessage(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+	if err != nil {
+		jsonError(w, "Неправильный ID", err)
 		return
 	}
-	fmt.Println("Всего сообщений: ", totalCount)
-
-	sendCount, err := handler.messagesRepo.SendCount()
-	if err != nil || sendCount < 0 {
-		jsonError(w, "Ошибка подсчета количества отправленных сообщений", err)
+	message, err := handler.messagesRepo.GetMessageByID(id)
+	if err != nil {
+		jsonError(w, "Ошибка получения сообщения", err)
 		return
 	}
-	fmt.Println("Всего отправленных сообщений: ", sendCount)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	json_text, err := json.Marshal(map[string]string{
-		"total_messages": strconv.FormatInt(totalCount, 10),
-		"send_messages":  strconv.FormatInt(sendCount, 10),
-	})
+
+	json_text, err := json.Marshal(message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println("Ошибка генерации JSON для jsonError:", err)
+		return
+	}
+
+	_, err = w.Write(json_text)
+	if err != nil {
+		fmt.Println("Ошибка записи JSON:", err)
+		return
+	}
+}
+
+func (handler *Handler) ApiGetAllMessages(w http.ResponseWriter, r *http.Request) {
+	count, err := strconv.ParseInt(r.URL.Query().Get("count"), 10, 64)
+	if err != nil {
+		count = 100
+	}
+	messages, err := handler.messagesRepo.GetAllMessages(count)
+	if err != nil {
+		jsonError(w, "Ошибка получения сообщения", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	json_text, err := json.Marshal(messages)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Println("Ошибка генерации JSON для jsonError:", err)

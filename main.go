@@ -42,7 +42,8 @@ func main() {
 
 	r.Get("/api/newmessage", handler.ApiNewMessage)
 	r.Get("/api/stats", handler.ApiStats)
-	r.Get("/api/allmessages", handler.ApiAllMessages)
+	r.Get("/api/getmessage", handler.ApiGetMessage)
+	r.Get("/api/getallmessages", handler.ApiGetAllMessages)
 	addr := fmt.Sprintf(":%s", os.Getenv("GPK_APIPORT"))
 	fmt.Printf("Start web server on port [%s]\n", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {

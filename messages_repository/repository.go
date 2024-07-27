@@ -82,3 +82,40 @@ func (messagesRepo *MessagesRepository) SendCount() (int64, error) {
 	}
 	return sendCount, nil
 }
+
+func (messagesRepo *MessagesRepository) GetMessageByID(id int64) (model.Message, error) {
+	var message model.Message
+	row := messagesRepo.DB.QueryRow("SELECT id, timestamp, topic, title, comment, sendtokafka FROM all_messages WHERE id=$1", id)
+	err := row.Scan(&message.ID, &message.Timestamp, &message.Topic, &message.Title, &message.Comment, &message.SendToKafka)
+	if err != nil {
+		fmt.Println("Ошибка запроса сообщения: ", err)
+		return model.Message{}, err
+	}
+	return message, nil
+}
+
+func (messagesRepo *MessagesRepository) GetAllMessages(count int64) ([]model.Message, error) {
+	var messages []model.Message
+	rows, err := messagesRepo.DB.Query("SELECT id, timestamp, topic, title, comment, sendtokafka FROM all_messages ORDER BY timestamp LIMIT $1", count)
+
+	if err != nil {
+		fmt.Println("Ошибка запроса сообщений: ", err)
+		return []model.Message{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var message model.Message
+		err := rows.Scan(&message.ID, &message.Timestamp, &message.Topic, &message.Title, &message.Comment, &message.SendToKafka)
+		if err != nil {
+			fmt.Println(err)
+			return []model.Message{}, err
+		}
+		messages = append(messages, message)
+	}
+	if rows.Err() != nil {
+		fmt.Println("Ошибка запроса сообщений: ", err)
+		return []model.Message{}, rows.Err()
+	}
+	return messages, nil
+}
