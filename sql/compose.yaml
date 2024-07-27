@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:15.7
+    network_mode: bridge
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      #- postgres-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres-db: 
+
+networks:
+  default:
+    name: main_network
+    external: true

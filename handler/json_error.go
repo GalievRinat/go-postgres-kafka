@@ -9,7 +9,7 @@ import (
 func jsonError(w http.ResponseWriter, text string, err error) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	text_error := fmt.Sprintf("%s [%s]", text, err)
-	fmt.Println(text_error)
+	//fmt.Println(text_error)
 
 	json_text, err := json.Marshal(map[string]string{"error": text_error})
 	if err != nil {

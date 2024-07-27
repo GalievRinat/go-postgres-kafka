@@ -41,6 +41,8 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Get("/api/newmessage", handler.ApiNewMessage)
+	r.Get("/api/stats", handler.ApiStats)
+	r.Get("/api/allmessages", handler.ApiAllMessages)
 	addr := fmt.Sprintf(":%s", os.Getenv("GPK_APIPORT"))
 	fmt.Printf("Start web server on port [%s]\n", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
