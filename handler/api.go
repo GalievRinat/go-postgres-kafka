@@ -36,19 +36,24 @@ func (handler *Handler) ApiNewMessage(w http.ResponseWriter, r *http.Request) {
 
 	message.ID = id
 
-	err = handler.KafkaNewMessage(message)
+	err = handler.SendMessageToKafka(message)
+	if err != nil || id < 0 {
+		fmt.Println("Ошибка отправки сообщения в kafka: ", err)
+	}
+
+	fmt.Println("Задача добавлена")
+	w.WriteHeader(http.StatusOK)
+	json_text, err := json.Marshal(map[string]string{"OK": "Задача добавлена"})
 	if err != nil {
-		jsonError(w, "Ошибка записи сообщения в Kafka:", err)
+		fmt.Println("Ошибка генерации JSON для jsonError:", err)
 		return
 	}
 
-	err = handler.messagesRepo.MarkSend(message)
+	_, err = w.Write(json_text)
 	if err != nil {
+		fmt.Println("Ошибка записи JSON:", err)
 		return
 	}
-	fmt.Println("Задача добавлена")
-	w.WriteHeader(http.StatusOK)
-	jsonError(w, "Задача добавлена", nil)
 }
 
 func (handler *Handler) ApiStats(w http.ResponseWriter, r *http.Request) {

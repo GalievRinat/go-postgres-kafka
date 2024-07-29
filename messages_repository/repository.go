@@ -119,3 +119,29 @@ func (messagesRepo *MessagesRepository) GetAllMessages(count int64) ([]model.Mes
 	}
 	return messages, nil
 }
+
+func (messagesRepo *MessagesRepository) GetUnsendMessages() ([]model.Message, error) {
+	var messages []model.Message
+	rows, err := messagesRepo.DB.Query("SELECT id, timestamp, topic, title, comment, sendtokafka FROM all_messages WHERE sendtokafka IS NOT TRUE ORDER BY timestamp")
+
+	if err != nil {
+		fmt.Println("Ошибка запроса неотправленных сообщений: ", err)
+		return []model.Message{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var message model.Message
+		err := rows.Scan(&message.ID, &message.Timestamp, &message.Topic, &message.Title, &message.Comment, &message.SendToKafka)
+		if err != nil {
+			fmt.Println(err)
+			return []model.Message{}, err
+		}
+		messages = append(messages, message)
+	}
+	if rows.Err() != nil {
+		fmt.Println("Ошибка запроса неотправленных сообщений: ", err)
+		return []model.Message{}, rows.Err()
+	}
+	return messages, nil
+}

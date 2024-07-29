@@ -25,6 +25,11 @@ func main() {
 		fmt.Println("Ошибка чтения порта БД:", err)
 		return
 	}
+	sendInterval, err := strconv.Atoi(os.Getenv("KAFKA_SENDINTERVAL"))
+	if err != nil {
+		fmt.Println("Ошибка чтения интервала отправки в kafka:", err)
+		return
+	}
 
 	host := os.Getenv("GPK_DBHOST")
 	user := os.Getenv("GPK_DBUSER")
@@ -37,6 +42,7 @@ func main() {
 		return
 	}
 	defer handler.CloseHandler()
+	go handler.SendTiker(sendInterval)
 
 	r := chi.NewRouter()
 
