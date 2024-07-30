@@ -1,6 +1,4 @@
 # go-postgres-kafka
-Тестовое задание
-
 Сервис принимает GET запросы по адресу /api/newmessage в формате JSON:
 ```
 {
